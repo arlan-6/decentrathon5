@@ -59,7 +59,7 @@ python -m venv .venv
 ### 2. Install dependencies
 
 ```powershell
-pip install fastapi uvicorn pydantic email-validator
+pip install -r requirements.txt
 ```
 
 ### 3. Run the API
@@ -73,6 +73,20 @@ App will be available at:
 - `http://127.0.0.1:8000`
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
+
+## Dependency Management
+
+- Runtime dependencies are pinned in `requirements.txt`.
+- After adding a new package locally, update `requirements.txt` so other developers can reproduce the environment.
+
+## Git Ignore
+
+The repository includes a `.gitignore` configured for:
+
+- Python cache/build artifacts
+- Virtual environments (`.venv/`, `venv/`, `env/`)
+- IDE folders (`.idea/`, `.vscode/`)
+- Local environment files (`.env*`)
 
 ## API Overview (v1)
 
