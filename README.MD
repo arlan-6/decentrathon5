@@ -3,6 +3,7 @@
 Decentrathon is a full-stack application for managing candidate submissions and applications.
 
 Current implementation status:
+
 - Backend CRUD API for candidates and applications is working.
 - Frontend is scaffolded and running with Vite + React + TypeScript.
 - Auth, review, and AI scoring modules exist in the backend codebase but are not mounted on the active API router yet.
@@ -16,12 +17,14 @@ decentrathon/
 ```
 
 For subsystem-specific details:
+
 - Backend docs: `backend/README.md`
 - Frontend docs: `frontend/README.md`
 
 ## Tech Stack
 
 ### Backend
+
 - FastAPI
 - SQLAlchemy
 - PostgreSQL
@@ -29,6 +32,7 @@ For subsystem-specific details:
 - Docker Compose (optional local orchestration)
 
 ### Frontend
+
 - React 19
 - TypeScript 5
 - Vite 8
@@ -63,6 +67,7 @@ npm run dev
 ```
 
 3. Open:
+
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - Swagger: http://localhost:8000/docs
@@ -100,6 +105,7 @@ The backend reads settings from environment variables:
 - `TOKEN_TTL_MINUTES` (default: `60`)
 
 When using `backend/docker-compose.yml`, the API container uses:
+
 - `DATABASE_URL=postgresql+psycopg2://postgres:postgres@postgres:5432/decentrathon`
 
 ## Current API Surface (Mounted Routes)
@@ -109,6 +115,7 @@ Base prefix: `/api/v1`
 - `GET /health`
 
 Candidate endpoints:
+
 - `POST /candidates/`
 - `GET /candidates/`
 - `GET /candidates/{candidate_id}`
@@ -116,6 +123,7 @@ Candidate endpoints:
 - `DELETE /candidates/{candidate_id}`
 
 Application endpoints:
+
 - `POST /applications/`
 - `GET /applications/`
 - `GET /applications/{application_id}`
@@ -123,11 +131,13 @@ Application endpoints:
 - `DELETE /applications/{application_id}`
 
 Also available:
+
 - `GET /` (root health message)
 
 ## Data Model (MVP)
 
 ### Candidate
+
 - `id`
 - `full_name`
 - `email`
@@ -135,6 +145,7 @@ Also available:
 - `created_at`
 
 ### Application
+
 - `id`
 - `candidate_id`
 - `essay_text`
@@ -145,6 +156,7 @@ Also available:
 ## Notes on In-Progress Modules
 
 The backend includes additional modules (`auth`, `reviews`, `scoring`, LLM integrations), but the active `api/v1/router.py` currently mounts only:
+
 - health
 - candidates
 - applications
