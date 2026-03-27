@@ -8,7 +8,10 @@ class Settings:
     debug: bool = os.getenv("DEBUG", "false").lower() == "true"
     secret_key: str = os.getenv("SECRET_KEY", "change-me")
     token_ttl_minutes: int = int(os.getenv("TOKEN_TTL_MINUTES", "60"))
+    database_url: str = os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg2://postgres:postgres@localhost:55432/decentrathon",
+    )
 
 
 settings = Settings()
-

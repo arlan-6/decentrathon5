@@ -1,156 +1,271 @@
-# Decentrathon Backend
+# Decentrathon Backend Architecture (Initial)
 
-FastAPI backend scaffold using a clean layered architecture:
+This backend uses a modular monolith with a layered architecture:
 
-- `api` for HTTP endpoints and dependencies
-- `services` for business logic
-- `repositories` for data access
-- `models` and `schemas` for domain and API contracts
-- `integrations/llm` for pluggable LLM clients
-- `core` for config, security, logging, and DB session placeholder
+`API -> Service -> Repository -> PostgreSQL`
 
-The current implementation is intentionally lightweight and uses in-memory repositories (no persistent database yet).
+The first MVP scope is focused on CRUD for `Candidate` and `Application`.
+
+## Stack
+
+- FastAPI
+- SQLAlchemy
+- PostgreSQL
+- Docker Compose
 
 ## Project Structure
 
 ```text
 backend/
-  main.py
   api/
-    deps.py
     v1/
-      router.py
       endpoints/
-        auth.py
         candidates.py
         applications.py
-        scoring.py
-        reviews.py
         health.py
+      router.py
+    deps.py
   core/
     config.py
-    security.py
     database.py
     logging.py
   models/
+    candidate.py
+    application.py
   schemas/
+    candidate.py
+    application.py
   repositories/
+    candidate_repository.py
+    application_repository.py
   services/
-  integrations/
-    llm/
-      base.py
-      gemini_client.py
-      openrouter_client.py
-      ollama_client.py
-  utils/
+    candidate_service.py
+    application_service.py
+  main.py
+  Dockerfile
+  docker-compose.yml
+  requirements.txt
+  requirements.postgres.txt
 ```
 
-## Quick Start
+## Layer Responsibilities
 
-### 1. Create and activate virtual environment
+- API layer: routes, request/response schemas, HTTP status codes
+- Service layer: business logic and orchestration
+- Repository layer: SQLAlchemy queries and persistence
+- Database layer: PostgreSQL storage
 
-Windows PowerShell:
+## MVP Entities
 
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
+### Candidate
+- `id`
+- `full_name`
+- `email`
+- `city`
+- `created_at`
 
-### 2. Install dependencies
+### Application
+- `id`
+- `candidate_id`
+- `essay_text`
+- `motivation_text`
+- `status`
+- `submitted_at`
 
-```powershell
-pip install -r requirements.txt
-```
-
-### 3. Run the API
-
-```powershell
-uvicorn main:app --reload
-```
-
-App will be available at:
-
-- `http://127.0.0.1:8000`
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
-
-## Dependency Management
-
-- Runtime dependencies are pinned in `requirements.txt`.
-- After adding a new package locally, update `requirements.txt` so other developers can reproduce the environment.
-
-## Git Ignore
-
-The repository includes a `.gitignore` configured for:
-
-- Python cache/build artifacts
-- Virtual environments (`.venv/`, `venv/`, `env/`)
-- IDE folders (`.idea/`, `.vscode/`)
-- Local environment files (`.env*`)
-
-## API Overview (v1)
+## API Scope (v1)
 
 Base prefix: `/api/v1`
 
 - `GET /health`
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me`
 - `POST /candidates/`
 - `GET /candidates/`
+- `GET /candidates/{candidate_id}`
+- `PUT /candidates/{candidate_id}`
+- `DELETE /candidates/{candidate_id}`
 - `POST /applications/`
 - `GET /applications/`
-- `POST /scoring/`
-- `GET /scoring/`
-- `POST /reviews/`
-- `GET /reviews/`
-
-## Authentication
-
-OAuth2 Bearer is used for protected endpoints.
-
-1. Register user via `/api/v1/auth/register`
-2. Login via `/api/v1/auth/login` to get `access_token`
-3. Send header: `Authorization: Bearer <token>`
-
-## Example Flow
-
-### Register
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/auth/register" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"reviewer@example.com\",\"password\":\"secret123\",\"role\":\"reviewer\"}"
-```
-
-### Login
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"reviewer@example.com\",\"password\":\"secret123\"}"
-```
-
-### Create Candidate (authorized)
-
-```bash
-curl -X POST "http://127.0.0.1:8000/api/v1/candidates/" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d "{\"full_name\":\"Alice Johnson\",\"email\":\"alice@example.com\",\"skills\":[\"python\",\"solidity\"]}"
-```
+- `GET /applications/{application_id}`
+- `PUT /applications/{application_id}`
+- `DELETE /applications/{application_id}`
 
 ## Environment Variables
 
-Optional settings from `core/config.py`:
+The app reads settings from environment variables:
 
 - `APP_NAME` (default: `Decentrathon Backend`)
-- `DEBUG` (`true` or `false`, default: `false`)
-- `SECRET_KEY` (default: `change-me`)
-- `TOKEN_TTL_MINUTES` (default: `60`)
+- `DEBUG` (default: `false`)
+- `DATABASE_URL` (default: `postgresql+psycopg2://postgres:postgres@localhost:55432/decentrathon`)
+- `SECRET_KEY` (reserved for auth modules)
+- `TOKEN_TTL_MINUTES` (reserved for auth modules)
+
+## Run with Docker Compose
+
+```powershell
+docker compose up --build
+```
+
+Services:
+
+- `api`: FastAPI on `http://localhost:8000`
+- `postgres`: PostgreSQL on host port `55432`
+
+## Run Locally (without Docker API container)
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt -r requirements.postgres.txt
+uvicorn main:app --reload
+```
+
+Default DB URL:
+
+`postgresql+psycopg2://postgres:postgres@localhost:55432/decentrathon`
+
+## API Docs UI
+
+After startup:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## Request and Response Examples
+
+All endpoints are prefixed with `/api/v1`.
+
+### Health
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/health"
+```
+
+### Create Candidate
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/candidates/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "full_name": "Alice Johnson",
+    "email": "alice@example.com",
+    "city": "Almaty"
+  }'
+```
+
+Response (201/200):
+
+```json
+{
+  "id": 1,
+  "full_name": "Alice Johnson",
+  "email": "alice@example.com",
+  "city": "Almaty",
+  "created_at": "2026-03-27T18:00:00.000000+00:00"
+}
+```
+
+### List Candidates
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/candidates/"
+```
+
+### Get Candidate
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/candidates/1"
+```
+
+### Update Candidate
+
+```bash
+curl -X PUT "http://localhost:8000/api/v1/candidates/1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "city": "Astana"
+  }'
+```
+
+### Delete Candidate
+
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/candidates/1"
+```
+
+### Create Application
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/applications/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "candidate_id": 1,
+    "essay_text": "My long-form essay...",
+    "motivation_text": "I want to join because..."
+  }'
+```
+
+Response (201/200):
+
+```json
+{
+  "id": 1,
+  "candidate_id": 1,
+  "essay_text": "My long-form essay...",
+  "motivation_text": "I want to join because...",
+  "status": "submitted",
+  "submitted_at": "2026-03-27T18:01:00.000000+00:00"
+}
+```
+
+### List Applications
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/applications/"
+```
+
+### Get Application
+
+```bash
+curl -X GET "http://localhost:8000/api/v1/applications/1"
+```
+
+### Update Application
+
+```bash
+curl -X PUT "http://localhost:8000/api/v1/applications/1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "in_review"
+  }'
+```
+
+### Delete Application
+
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/applications/1"
+```
+
+## Error Handling
+
+Common HTTP responses:
+
+- `400 Bad Request`: validation/business rule errors (for example duplicate candidate email)
+- `404 Not Found`: requested candidate/application does not exist
+- `422 Unprocessable Entity`: invalid request payload format
+
+## Request Flow
+
+Example (`POST /candidates/`):
+
+1. API endpoint validates request payload with Pydantic schema.
+2. Service applies business rules.
+3. Repository executes SQLAlchemy persistence.
+4. API returns serialized response schema.
 
 ## Notes
 
-- Data is not persisted across restarts.
-- `integrations/llm/*` currently contains stub scoring logic.
-- `core/database.py` is a placeholder for future DB integration.
+- Current table creation uses SQLAlchemy `create_all` at app startup.
+- For production evolution, add Alembic migrations to version schema changes.
+
+## Extension Path
+
+AI scoring should be added later as a separate service module (for example `ScoringService`) without mixing AI logic into CRUD endpoints.

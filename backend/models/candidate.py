@@ -1,9 +1,19 @@
-from pydantic import BaseModel, EmailStr
+from datetime import datetime
+
+from sqlalchemy import DateTime, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from core.database import Base
 
 
-class Candidate(BaseModel):
-    id: int
-    full_name: str
-    email: EmailStr
-    skills: list[str] = []
+class Candidate(Base):
+    __tablename__ = "candidates"
 
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    full_name: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    city: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+    )

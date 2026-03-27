@@ -1,6 +1,6 @@
 from repositories.application_repository import ApplicationRepository
 from repositories.candidate_repository import CandidateRepository
-from schemas.application import ApplicationCreate
+from schemas.application import ApplicationCreate, ApplicationUpdate
 
 
 class ApplicationService:
@@ -18,10 +18,32 @@ class ApplicationService:
             raise ValueError("Candidate does not exist")
         return self.application_repository.create(
             candidate_id=payload.candidate_id,
-            role=payload.role,
-            motivation=payload.motivation,
+            essay_text=payload.essay_text,
+            motivation_text=payload.motivation_text,
         )
 
     def list_all(self):
         return self.application_repository.list_all()
 
+    def get(self, *, application_id: int):
+        return self.application_repository.get(application_id)
+
+    def update(self, *, application_id: int, payload: ApplicationUpdate):
+        application = self.application_repository.get(application_id)
+        if application is None:
+            return None
+
+        return self.application_repository.update(
+            application=application,
+            essay_text=payload.essay_text,
+            motivation_text=payload.motivation_text,
+            status=payload.status,
+        )
+
+    def delete(self, *, application_id: int) -> bool:
+        application = self.application_repository.get(application_id)
+        if application is None:
+            return False
+
+        self.application_repository.delete(application=application)
+        return True
