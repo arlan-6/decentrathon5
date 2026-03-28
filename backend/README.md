@@ -1,13 +1,12 @@
-# Minimal FastAPI CRUD (Single File)
+# Minimal FastAPI CRUD (Modular Folders)
 
-This project now has:
+This project provides a simple CRUD API for `items` using FastAPI + SQLAlchemy + PostgreSQL.
 
-- one Python file: `main.py`
-- one CRUD resource: `items`
-- PostgreSQL in Docker Compose (DB only)
-- legacy architecture folders kept as placeholders (not removed)
+- API runs locally from Python
+- Database runs in Docker (`postgres` only)
+- Code is separated into folders: `api`, `core`, `models`, `schemas`, `repositories`, `services`
 
-## Current Structure
+## Project Structure
 
 ```text
 backend/
@@ -16,49 +15,48 @@ backend/
   requirements.txt
   requirements.postgres.txt
   README.md
-  test_main.http
   .env.example
-  api/                  # empty placeholder
-  core/                 # empty placeholder
-  models/               # empty placeholder
-  schemas/              # empty placeholder
-  repositories/         # empty placeholder
-  services/             # empty placeholder
-  integrations/         # empty placeholder
-  integrations/llm/     # empty placeholder
-  utils/                # empty placeholder
+  api/
+    deps.py
+    v1/
+      router.py
+      endpoints/
+        items.py
+  core/
+    config.py
+    database.py
+  models/
+    item.py
+  schemas/
+    item.py
+  repositories/
+    item_repository.py
+  services/
+    item_service.py
+  integrations/          # empty (reserved)
+    llm/                 # empty (reserved)
+  utils/                 # empty (reserved)
 ```
 
-## How to Use Folders
+## Folder Usage
 
-Right now, the API runs only from `main.py`. The placeholder folders are kept for future modularization.
-
-- `main.py`: all running code (model, schemas, DB session, routes)
-- `api/`: move route handlers here when splitting the app
-- `core/`: shared config, DB bootstrap, logging utilities
-- `models/`: SQLAlchemy ORM models (one file per entity)
+- `main.py`: app entrypoint, lifespan startup, root route
+- `api/`: HTTP layer (routes + DI wiring)
+- `core/`: database/config setup
+- `models/`: SQLAlchemy models
 - `schemas/`: Pydantic request/response models
-- `repositories/`: DB query layer
+- `repositories/`: DB access/query logic
 - `services/`: business logic layer
-- `integrations/`: external clients (LLM, email, webhooks, etc.)
-- `utils/`: shared helpers/constants
+- `integrations/`: future external integrations
+- `utils/`: future shared helpers
 
-Recommended migration path later:
-
-1. Keep `main.py` as app entrypoint only.
-2. Move ORM model(s) to `models/`.
-3. Move Pydantic models to `schemas/`.
-4. Move CRUD DB operations to `repositories/`.
-5. Move business rules to `services/`.
-6. Keep route definitions in `api/`.
-
-## Run Database (Docker Only)
+## Run Database (Docker only)
 
 ```powershell
 docker compose up -d postgres
 ```
 
-PostgreSQL is exposed on host `localhost:55432`.
+PostgreSQL host mapping: `localhost:55432`.
 
 ## Run API Locally
 
@@ -69,20 +67,22 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
+API base: `http://127.0.0.1:8000`
+
 ## Environment Variable
 
-`DATABASE_URL` (optional):
+Optional `DATABASE_URL` (default):
 
 `postgresql+psycopg2://postgres:postgres@localhost:55432/decentrathon`
 
 ## Endpoints
 
-- `GET /` health message
-- `POST /items` create item
-- `GET /items` list items
-- `GET /items/{item_id}` get item
-- `PUT /items/{item_id}` update item
-- `DELETE /items/{item_id}` delete item
+- `GET /`
+- `POST /items`
+- `GET /items`
+- `GET /items/{item_id}`
+- `PUT /items/{item_id}`
+- `DELETE /items/{item_id}`
 
 ## Example Requests
 
@@ -114,6 +114,7 @@ Delete:
 curl -X DELETE "http://127.0.0.1:8000/items/1"
 ```
 
-Docs UI:
+## API Docs
 
-- `http://127.0.0.1:8000/docs`
+- Swagger: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
