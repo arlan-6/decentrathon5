@@ -1,20 +1,4 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: decentrathon-api
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/decentrathon
-      APP_NAME: Decentrathon Backend
-      DEBUG: "false"
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   postgres:
     image: postgres:16-alpine
     container_name: decentrathon-postgres

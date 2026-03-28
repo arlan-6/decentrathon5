@@ -3,15 +3,15 @@ from collections.abc import Iterator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-from core.config import settings
+from core.config import DATABASE_URL
+
+
+engine = create_engine(DATABASE_URL, future=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
 class Base(DeclarativeBase):
     pass
-
-
-engine = create_engine(settings.database_url, future=True)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
 def get_db() -> Iterator[Session]:
@@ -23,11 +23,7 @@ def get_db() -> Iterator[Session]:
 
 
 def init_db() -> None:
-    from models.application import Application
-    from models.candidate import Candidate
-    from models.review import Review
-    from models.score import Score
-    from models.user import User
+    from models.item import Item
 
-    _ = (Application, Candidate, Review, Score, User)
+    _ = Item
     Base.metadata.create_all(bind=engine)
