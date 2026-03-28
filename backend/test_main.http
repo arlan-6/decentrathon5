@@ -27,6 +27,27 @@ username=alice@example.com&password=StrongPass123!
 
 # Copy token from login response and paste below
 @token=PASTE_ACCESS_TOKEN_HERE
+@refresh_token=PASTE_REFRESH_TOKEN_HERE
+
+###
+
+# Refresh token
+POST http://127.0.0.1:8000/auth/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh_token}}"
+}
+
+###
+
+# Logout (revoke refresh token)
+POST http://127.0.0.1:8000/auth/logout
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh_token}}"
+}
 
 ###
 

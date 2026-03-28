@@ -29,12 +29,14 @@ backend/
     security.py
   models/
     item.py
+    refresh_token.py
     user.py
   schemas/
     auth.py
     item.py
   repositories/
     item_repository.py
+    refresh_token_repository.py
     user_repository.py
   services/
     auth_service.py
@@ -82,12 +84,15 @@ Optional:
 - `DATABASE_URL` (default: `postgresql+psycopg2://postgres:postgres@localhost:55432/decentrathon`)
 - `JWT_SECRET` (set this in real environments)
 - `ACCESS_TOKEN_EXPIRE_MINUTES` (default: `60`)
+- `REFRESH_TOKEN_EXPIRE_DAYS` (default: `30`)
 
 ## Endpoints
 
 - `GET /`
 - `POST /auth/register`
 - `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
 - `GET /auth/me` (protected)
 - `POST /items`
 - `GET /items`
@@ -100,9 +105,10 @@ All `/items` endpoints are protected and require a Bearer token.
 ## Auth Flow
 
 1. Register user via `POST /auth/register` (JSON body).
-2. Login via `POST /auth/login` (form-data, OAuth2 style).
-3. Use returned `access_token` as `Authorization: Bearer <token>`.
-4. Call protected endpoints like `/auth/me` and `/items`.
+2. Login via `POST /auth/login` (form-data, OAuth2 style) to receive `access_token` and `refresh_token`.
+3. Use `access_token` as `Authorization: Bearer <token>` for protected endpoints.
+4. When access token expires, call `POST /auth/refresh` with `refresh_token` to get a new pair.
+5. Call `POST /auth/logout` with `refresh_token` to revoke it.
 
 ## Example Requests
 
@@ -120,6 +126,22 @@ Login (form-data):
 curl -X POST "http://127.0.0.1:8000/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "username=alice@example.com&password=StrongPass123!"
+```
+
+Refresh token (JSON):
+
+```bash
+curl -X POST "http://127.0.0.1:8000/auth/refresh" \
+  -H "Content-Type: application/json" \
+  -d "{\"refresh_token\":\"<REFRESH_TOKEN>\"}"
+```
+
+Logout (JSON):
+
+```bash
+curl -X POST "http://127.0.0.1:8000/auth/logout" \
+  -H "Content-Type: application/json" \
+  -d "{\"refresh_token\":\"<REFRESH_TOKEN>\"}"
 ```
 
 Get current user (protected):

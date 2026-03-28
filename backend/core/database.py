@@ -29,6 +29,9 @@ def init_db() -> None:
     _ = (Item, User)
     Base.metadata.create_all(bind=engine)
     _sync_users_schema()
+    from models.refresh_token import RefreshToken
+    _ = RefreshToken
+    Base.metadata.create_all(bind=engine)
 
 
 def _sync_users_schema() -> None:

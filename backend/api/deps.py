@@ -3,9 +3,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from core.config import JWT_ALGORITHM, JWT_SECRET
 from core.database import get_db
+from core.security import decode_token
 from repositories.item_repository import ItemRepository
+from repositories.refresh_token_repository import RefreshTokenRepository
 from repositories.user_repository import UserRepository
 from services.auth_service import AuthService
 from services.item_service import ItemService
@@ -18,7 +19,10 @@ def get_item_service(db: Session = Depends(get_db)) -> ItemService:
 
 
 def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
-    return AuthService(repository=UserRepository(db))
+    return AuthService(
+        repository=UserRepository(db),
+        refresh_repository=RefreshTokenRepository(db),
+    )
 
 
 def get_current_user(
@@ -31,7 +35,7 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = decode_token(token, expected_type="access")
         public_id = payload.get("sub")
         if public_id is None:
             raise credentials_error

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import Response
 
 from api.deps import get_auth_service, get_current_user
 from models.user import User
-from schemas.auth import RegisterRequest, TokenResponse, UserRead
+from schemas.auth import RefreshTokenRequest, RegisterRequest, TokenResponse, UserRead
 from services.auth_service import AuthService
 
 router = APIRouter()
@@ -23,6 +24,23 @@ def login(
     service: AuthService = Depends(get_auth_service),
 ):
     return service.login(email=form_data.username, password=form_data.password)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh(
+    payload: RefreshTokenRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    return service.refresh(payload)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    payload: RefreshTokenRequest,
+    service: AuthService = Depends(get_auth_service),
+):
+    service.logout(payload)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/me", response_model=UserRead)
