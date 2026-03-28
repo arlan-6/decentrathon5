@@ -1,11 +1,56 @@
-# Test your FastAPI endpoints
-
+# Root
 GET http://127.0.0.1:8000/
 Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/hello/User
+# Register (JSON)
+POST http://127.0.0.1:8000/auth/register
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "StrongPass123!",
+  "full_name": "Alice",
+  "role": "candidate"
+}
+
+###
+
+# Login (form-data)
+POST http://127.0.0.1:8000/auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=alice@example.com&password=StrongPass123!
+
+###
+
+# Copy token from login response and paste below
+@token=PASTE_ACCESS_TOKEN_HERE
+
+###
+
+# Current user (protected)
+GET http://127.0.0.1:8000/auth/me
 Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+# Create item (protected)
+POST http://127.0.0.1:8000/items/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "first item"
+}
+
+###
+
+# List items (protected)
+GET http://127.0.0.1:8000/items/
+Accept: application/json
+Authorization: Bearer {{token}}
 
 ###

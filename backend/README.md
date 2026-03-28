@@ -1,6 +1,6 @@
-# Minimal FastAPI CRUD (Modular Folders)
+# Minimal FastAPI CRUD + JWT Auth (Modular Folders)
 
-This project provides a simple CRUD API for `items` using FastAPI + SQLAlchemy + PostgreSQL.
+This project provides a simple CRUD API for `items` using FastAPI + SQLAlchemy + PostgreSQL, with JWT authentication.
 
 - API runs locally from Python
 - Database runs in Docker (`postgres` only)
@@ -21,17 +21,23 @@ backend/
     v1/
       router.py
       endpoints/
+        auth.py
         items.py
   core/
     config.py
     database.py
+    security.py
   models/
     item.py
+    user.py
   schemas/
+    auth.py
     item.py
   repositories/
     item_repository.py
+    user_repository.py
   services/
+    auth_service.py
     item_service.py
   integrations/          # empty (reserved)
     llm/                 # empty (reserved)
@@ -71,50 +77,102 @@ API base: `http://127.0.0.1:8000`
 
 ## Environment Variable
 
-Optional `DATABASE_URL` (default):
+Optional:
 
-`postgresql+psycopg2://postgres:postgres@localhost:55432/decentrathon`
+- `DATABASE_URL` (default: `postgresql+psycopg2://postgres:postgres@localhost:55432/decentrathon`)
+- `JWT_SECRET` (set this in real environments)
+- `ACCESS_TOKEN_EXPIRE_MINUTES` (default: `60`)
 
 ## Endpoints
 
 - `GET /`
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me` (protected)
 - `POST /items`
 - `GET /items`
 - `GET /items/{item_id}`
 - `PUT /items/{item_id}`
 - `DELETE /items/{item_id}`
 
+All `/items` endpoints are protected and require a Bearer token.
+
+## Auth Flow
+
+1. Register user via `POST /auth/register` (JSON body).
+2. Login via `POST /auth/login` (form-data, OAuth2 style).
+3. Use returned `access_token` as `Authorization: Bearer <token>`.
+4. Call protected endpoints like `/auth/me` and `/items`.
+
 ## Example Requests
 
-Create:
+Register (JSON):
+
+```bash
+curl -X POST "http://127.0.0.1:8000/auth/register" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"alice@example.com\",\"password\":\"StrongPass123!\",\"full_name\":\"Alice\",\"role\":\"candidate\"}"
+```
+
+Login (form-data):
+
+```bash
+curl -X POST "http://127.0.0.1:8000/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=alice@example.com&password=StrongPass123!"
+```
+
+Get current user (protected):
+
+```bash
+curl "http://127.0.0.1:8000/auth/me" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+Create item (protected):
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/items" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -d "{\"name\":\"first item\"}"
 ```
 
-List:
+List items (protected):
 
 ```bash
-curl "http://127.0.0.1:8000/items"
+curl "http://127.0.0.1:8000/items" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
-Update:
+## How To Make Protected Endpoints
 
-```bash
-curl -X PUT "http://127.0.0.1:8000/items/1" \
-  -H "Content-Type: application/json" \
-  -d "{\"name\":\"updated item\"}"
+Use `get_current_user` dependency from `api.deps`.
+
+Protect a whole router:
+
+```python
+from fastapi import APIRouter, Depends
+from api.deps import get_current_user
+
+router = APIRouter(dependencies=[Depends(get_current_user)])
 ```
 
-Delete:
+Protect a single endpoint:
 
-```bash
-curl -X DELETE "http://127.0.0.1:8000/items/1"
+```python
+from fastapi import Depends
+from api.deps import get_current_user
+from models.user import User
+
+@router.get("/profile")
+def profile(current_user: User = Depends(get_current_user)):
+    return {"id": current_user.id, "email": current_user.email}
 ```
 
 ## API Docs
 
 - Swagger: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
+
+Tip: In Swagger, click **Authorize**, paste `Bearer <ACCESS_TOKEN>`, and call protected routes.

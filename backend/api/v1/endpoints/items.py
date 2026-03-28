@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
-from api.deps import get_item_service
+from api.deps import get_current_user, get_item_service
 from schemas.item import ItemCreate, ItemRead, ItemUpdate
 from services.item_service import ItemService
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.post("/", response_model=ItemRead, status_code=status.HTTP_201_CREATED)
